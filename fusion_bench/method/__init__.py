@@ -79,6 +79,7 @@ _import_structure = {
         "SparseLoForLlama",
         "PCPSparseLoForLlama",
     ],
+    "consensus_ta": ["ConsensusTAAlgorithm"],
 }
 
 
@@ -143,7 +144,7 @@ if TYPE_CHECKING:
     from .ties_merging import TiesMergingAlgorithm
     from .we_moe import CLIPWeightEnsemblingMoEAlgorithm
     from .weighted_average import WeightedAverageAlgorithm, WeightedAverageForLLama
-
+    from .consensus_ta import ConsensusTAAlgorithm
 else:
     sys.modules[__name__] = LazyImporter(
         __name__,
