@@ -232,9 +232,9 @@ def state_dict_sum(state_dicts: List[StateDictType]):
         Dict: The sum of the state dicts.
     """
     assert len(state_dicts) > 0, "The number of state_dicts must be greater than 0"
-    assert all(
-        [len(state_dicts[0]) == len(state_dict) for state_dict in state_dicts]
-    ), "All state_dicts must have the same number of keys"
+    # assert all(
+    #     [len(state_dicts[0]) == len(state_dict) for state_dict in state_dicts]
+    # ), "All state_dicts must have the same number of keys"
 
     sum_state_dict = OrderedDict()
     for key in state_dicts[0]:

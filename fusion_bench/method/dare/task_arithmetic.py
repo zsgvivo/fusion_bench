@@ -2,14 +2,18 @@ import torch
 from torch import Tensor, nn
 
 from fusion_bench import BaseModelFusionAlgorithm, BaseModelPool
-from fusion_bench.utils.state_dict_arithmetic import state_dict_sum
+from fusion_bench.utils.state_dict_arithmetic import state_dict_sum, state_dict_mul
 
 from .utils import (
     module_sub_,
     module_random_drop_,
     param_random_drop_,
 )
-
+from fusion_bench.utils.state_dict_arithmetic import (
+    state_dict_add,
+    state_dict_mul,
+    state_dict_sub,
+)
 
 class DareTaskArithmetic(BaseModelFusionAlgorithm):
     """
@@ -37,11 +41,11 @@ class DareTaskArithmetic(BaseModelFusionAlgorithm):
         ), "Sparsity ratio must be between 0 and 1"
         pretrained_model = modelpool.load_pretrained_model()
         finetuned_models = {
-            model_name: modelpool.load_model(model_name)
+            model_name: modelpool.load_model(model_name).state_dict(keep_vars=True)
             for model_name in modelpool.model_names
         }
         task_vectors = {
-            model_name: module_sub_(finetuned_models, pretrained_model)
+            model_name: module_sub_(finetuned_models[model_name], pretrained_model.state_dict(keep_vars=True))
             for model_name in finetuned_models
         }
         del finetuned_models
@@ -58,11 +62,15 @@ class DareTaskArithmetic(BaseModelFusionAlgorithm):
                 module_random_drop_(tv, self.sparsity_ratio, rescale=True)
 
         # merge task vectors
-        task_vector_sum = state_dict_sum(task_vectors.values())
+        task_vector_sum = state_dict_sum(list(task_vectors.values()))
 
         # scale the task vector and add it to the pretrained model
-        for name, delta in task_vector_sum.items():
-            delta = delta * self.scaling_factor
-            pretrained_model.get_parameter(name).data.add_(delta)
+        # for name, delta in task_vector_sum.items():
+        #     delta = delta * self.scaling_factor
+        #     pretrained_model.get_parameter(name).data.add_(delta)
+        task_vector_sum = state_dict_mul(task_vector_sum, self.scaling_factor)
+        pretrained_model.load_state_dict(
+            state_dict_sum([pretrained_model.state_dict(keep_vars=True), task_vector_sum])
+        )
 
         return pretrained_model
